@@ -1,44 +1,60 @@
 from flask import Flask,render_template,url_for,request
 import time
 import spacy
-import nltk
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lex_rank import LexRankSummarizer
-from sumy.summarizers.luhn import LuhnSummarizer
-from sumy.summarizers.lsa import LsaSummarizer
+# import nltk
+# from sumy.parsers.plaintext import PlaintextParser
+# from sumy.nlp.tokenizers import Tokenizer
+# from sumy.summarizers.lex_rank import LexRankSummarizer
+# from sumy.summarizers.luhn import LuhnSummarizer
+# from sumy.summarizers.lsa import LsaSummarizer
 from bs4 import BeautifulSoup
 from urllib.request import urlopen,Request
+from summarizer import Summarizer,TransformerSummarizer
 
 
 nlp = spacy.load("en_core_web_sm")
 
 app = Flask(__name__)
 
-def lex_summary(docx):
-	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
-	lex_summarizer = LexRankSummarizer()
-	summary = lex_summarizer(parser.document,3)
-	summary_list = [str(sentence) for sentence in summary]
-	result = ' '.join(summary_list)
+def bert_summary(docx):
+	bert_model = Summarizer()
+	result = ''.join(bert_model(docx, min_length=60))
 	return result
 
-def luhn_summary(docx):
-	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
-	summarizer_luhn = LuhnSummarizer()
-	summary_1 =summarizer_luhn(parser.document,3)
-	summary_list = [str(sentence) for sentence in summary_1]
-	result = ' '.join(summary_list)
+def gpt2_summary(docx):
+	GPT2_model = TransformerSummarizer(transformer_type="GPT2",transformer_model_key="gpt2-medium")
+	result = ''.join(GPT2_model(docx, min_length=60))
 	return result
 
-
-def isa_summary(docx):
-	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
-	summarizer_lsa = LsaSummarizer()
-	summary_2 =summarizer_lsa(parser.document,3)
-	summary_list = [str(sentence) for sentence in summary_2]
-	result = ' '.join(summary_list)
+def xlnet_summary(docx):
+	model = TransformerSummarizer(transformer_type="XLNet",transformer_model_key="xlnet-base-cased")
+	result = ''.join(model(docx, min_length=60))
 	return result
+
+# def lex_summary(docx):
+# 	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
+# 	lex_summarizer = LexRankSummarizer()
+# 	summary = lex_summarizer(parser.document,3)
+# 	summary_list = [str(sentence) for sentence in summary]
+# 	result = ' '.join(summary_list)
+# 	return result
+
+# def luhn_summary(docx):
+# 	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
+# 	summarizer_luhn = LuhnSummarizer()
+# 	summary_1 =summarizer_luhn(parser.document,3)
+# 	summary_list = [str(sentence) for sentence in summary_1]
+# 	result = ' '.join(summary_list)
+# 	return result
+
+
+# def isa_summary(docx):
+# 	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
+# 	summarizer_lsa = LsaSummarizer()
+# 	summary_2 =summarizer_lsa(parser.document,3)
+# 	summary_list = [str(sentence) for sentence in summary_2]
+# 	result = ' '.join(summary_list)
+# 	return result
 
 
 # Reading Time
@@ -59,14 +75,14 @@ def process():
         input_text = request.form['input_text']
         model_choice = request.form['model_choice']
         final_reading_time = readingTime(input_text)
-        if model_choice == 'default':
-            final_summary = lex_summary(input_text)
-        elif model_choice == 'lex_summarizer':
-            final_summary = lex_summary(input_text)
-        elif model_choice == 'luhn_summarizer':
-            final_summary= luhn_summary(input_text)
-        elif model_choice == 'isa_summarizer':
-            final_summary= isa_summary(input_text)
+        if model_choice == 'bert_summarizer':
+            final_summary = bert_summary(input_text)
+        elif model_choice == 'gpt2_summarizer':
+            final_summary = gpt2_summary(input_text)
+        elif model_choice == 'xlnet_summarizer':
+            final_summary= xlnet_summary(input_text)
+        # elif model_choice == 'isa_summarizer':
+        #     final_summary= isa_summary(input_text)
     summary_reading_time = readingTime(final_summary)
     end = time.time()
     final_time = end-start
